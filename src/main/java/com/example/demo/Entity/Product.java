@@ -27,6 +27,6 @@ public class Product {
     private Float Price;
     private Boolean Status;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false) // tên cột khóa ngoại
+    @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 }

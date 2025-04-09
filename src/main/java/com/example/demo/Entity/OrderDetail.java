@@ -24,7 +24,7 @@ public class OrderDetail {
 
     private int quantity;
 
-    private double price; // đơn giá tại thời điểm đặt hàng
+    private double price;
 
-    private double amount; // price * quantity
+    private double amount;
 }
