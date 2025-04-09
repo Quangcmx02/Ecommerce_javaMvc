@@ -11,22 +11,34 @@ import lombok.Setter;
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "ProductId", nullable = false)
-    private Long ProductId;
+    @Column(name = "product_id", nullable = false)
+    private Long productId;
 
-    private String Name;
+    @Column(name = "name", nullable = false)
+    private String name;
 
-    private int Quantity;
+    @Column(name = "quantity")
+    private int quantity;
 
-    private String Size;
+    @Column(name = "size")
+    private String size;
 
-    private String Description;
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
 
-    private String ImageLink;
+    @Column(name = "image_link")
+    private String imageLink;
 
-    private Float Price;
-    private Boolean Status;
+    @Column(name = "is_active")
+    private boolean isActive;
+
+    @Column(name = "price")
+    private Float price;
+
+    @Column(name = "status")
+    private Boolean status;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false) // tên cột khóa ngoại
+    @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 }

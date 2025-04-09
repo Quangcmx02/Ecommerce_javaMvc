@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+</head>
+<body>
+<div th:replace="layout :: layout(~{::content})">
+    <th:block th:fragment="content">
+        <section>
+            <div class="container mt-5 p-5">
+                <div class="row">
+                    <div class="col-md-6 mt-3 p-5">
+                        <div class="card shadow p-3 mb-5 bg-body rounded">
+                            <div class="card-header">
+                                <p class="fs-4 text-center">Register</p>
+
+                                <!-- Registration Error Alert -->
+                                <div th:if="${param.error}" class="alert alert-danger text-center">
+                                    [[${session.SPRING_SECURITY_LAST_EXCEPTION.message}]]
+                                </div>
+                                <!-- Registration Error Alert -->
+                            </div>
+                            <div class="card-body">
+                                <form action="/register" method="post">
+                                    <div class="mb-3">
+                                        <label class="form-label">Email</label>
+                                        <input class="form-control" name="email" type="email" required />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Username</label>
+                                        <input class="form-control" name="username" type="text" required />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Password</label>
+                                        <input class="form-control" name="password" type="password" required />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Confirm Password</label>
+                                        <input class="form-control" name="confirmPassword" type="password" required />
+                                    </div>
+
+                                    <button type="submit" class="btn bg-danger text-white col-md-12">Register</button>
+                                </form>
+                            </div>
+                            <div class="card-footer text-center">
+                                <a href="/login" class="text-decoration-none">Already have an account? Login here</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </th:block>
+</div>
+</body>
+</html>

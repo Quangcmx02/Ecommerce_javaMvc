@@ -1,12 +1,9 @@
 package com.example.demo.Entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.springframework.data.jpa.domain.AbstractAuditable;
 
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -18,32 +15,23 @@ import java.util.Date;
 @Setter
 @Entity
 
-public class User   {
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "UserId", nullable = false)
-    private Long UserId;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
-    private String FirstName;
-
-    private String LastName;
-
-    private String Email;
-
-    private String Password;
-
-    private String Role;
-
-    private String ImgLink;
-
-    private String Adress ;
-
-
-    private Boolean AccountStatusNonLocked;
-
-    private Integer AccountfailedAttemptCount;
-
-    private Date AccountLockTime;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String password;
+    private String role;
+    private String imgLink;
+    private String adress;
+    private Boolean accountStatusNonLocked;
+    private Integer accountFailedAttemptCount;
+    private Date accountLockTime;
+    private Boolean isEnable;
     @CreationTimestamp
     private LocalDateTime createdAt;
 
