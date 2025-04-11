@@ -2,9 +2,11 @@ package com.example.demo.Service.Impl;
 
 import com.example.demo.Entity.User;
 import com.example.demo.Repository.UserRepository;
+import com.example.demo.Service.LoggerService;
 import com.example.demo.Service.UserService;
 import com.example.demo.Utils.UserAuthUtlis;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,26 +17,38 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
     @Autowired
     UserRepository userRepository;
-
+    @Autowired
+    private LoggerService loggerService;
     @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Override
     public User saveUser(User user) {
-        System.out.println("user obje :"+user.toString());
+        loggerService.logInfo("Attempting to save user: email=" + user.getEmail());
         user.setRole("ROLE_USER");
         user.setIsEnable(true);
         user.setAccountStatusNonLocked(true);
         user.setAccountFailedAttemptCount(0);
         user.setAccountLockTime(null);
+
+        // Validation đã được thực hiện ở controller, nhưng giữ kiểm tra này cho an toàn
+        if (user.getPassword() == null || user.getPassword().isEmpty()) {
+            loggerService.logError("Password is null or empty");
+            throw new IllegalArgumentException("Mật khẩu không được để trống");
+        }
+
         String encodedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(encodedPassword);
         try {
-            User saveUser = userRepository.save(user);
-
-            return saveUser;
+            User savedUser = userRepository.save(user);
+            loggerService.logInfo("User saved successfully: email=" + savedUser.getEmail());
+            return savedUser;
+        } catch (DataIntegrityViolationException e) {
+            loggerService.logError("Email already exists: " + user.getEmail(), e);
+            throw new RuntimeException("Email đã được sử dụng");
         } catch (Exception e) {
-            throw new RuntimeException("Failed to create user", e);
+            loggerService.logError("Failed to save user: " + e.getMessage(), e);
+            throw new RuntimeException("Không thể tạo người dùng: " + e.getMessage(), e);
         }
     }
 

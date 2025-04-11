@@ -62,7 +62,7 @@ public class AuthFailImpl extends SimpleUrlAuthenticationFailureHandler {
             exception = new LockedException("Email & Password Invalid!");
         }
 
-        super.setDefaultFailureUrl("/signin?error");
+        super.setDefaultFailureUrl("/auth/login?error=true");
         super.onAuthenticationFailure(request, response, exception);
     }
 }

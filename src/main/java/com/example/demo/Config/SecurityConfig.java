@@ -1,6 +1,5 @@
 package com.example.demo.Config;
 
-import com.example.demo.Service.Impl.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,20 +27,8 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public UserDetailsService userDetailsService() {
-        return new UserDetailsServiceImpl();
-    }
 
     //for authentication : userDetails and Password
-    @Bean
-    public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
-        authenticationProvider.setUserDetailsService(userDetailsService());
-        authenticationProvider.setPasswordEncoder(passwordEncoder());
-        return authenticationProvider;
-
-    }
 
     //which role can get which access:
     @Bean
@@ -51,8 +38,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(req -> req.requestMatchers("/user/**").hasRole("USER")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/**").permitAll())
-                .formLogin(form -> form.loginPage("/signin")
-                        .loginProcessingUrl("/login")
+                .formLogin(form -> form.loginPage("/auth/login")
+                        .loginProcessingUrl("auth/login")
                         //.defaultSuccessUrl("/")//before implements authenticationsSuccessHandler.
                         //after implementation authenticationsSuccessHandler -> call successHandler
                         .failureHandler(authenticationFailureHandler)
