@@ -25,7 +25,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User saveUser(User user) {
         loggerService.logInfo("Attempting to save user: email=" + user.getEmail());
-        user.setRole("ROLE_USER");
+        user.setRole("admin");
         user.setIsEnable(true);
         user.setAccountStatusNonLocked(true);
         user.setAccountFailedAttemptCount(0);

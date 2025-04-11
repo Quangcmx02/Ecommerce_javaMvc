@@ -14,7 +14,8 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 @Configuration
 public class SecurityConfig {
-
+    @Autowired
+    private UserDetailsService userDetailsService;
     @Autowired
     AuthenticationSuccessHandler authenticationSuccessHandler;
 
@@ -26,28 +27,33 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService); // Gắn UserDetailsService
+        authProvider.setPasswordEncoder(passwordEncoder());     // Gắn PasswordEncoder
+        return authProvider;
+    }
 
-
-    //for authentication : userDetails and Password
-
-    //which role can get which access:
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
+        http
+                .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.disable())
-                .authorizeHttpRequests(req -> req.requestMatchers("/user/**").hasRole("USER")
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/**").permitAll())
-                .formLogin(form -> form.loginPage("/auth/login")
-                        .loginProcessingUrl("auth/login")
-                        //.defaultSuccessUrl("/")//before implements authenticationsSuccessHandler.
-                        //after implementation authenticationsSuccessHandler -> call successHandler
+                .authenticationProvider(authenticationProvider()) // Dùng DaoAuthenticationProvider
+                .authorizeHttpRequests(req -> req
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/home").permitAll()
+                        .requestMatchers("/user/**").hasRole("user")
+                        .requestMatchers("/admin/**").hasRole("user")
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage("/auth/login")
+                        .loginProcessingUrl("/auth/login")
                         .failureHandler(authenticationFailureHandler)
-                        .successHandler(authenticationSuccessHandler))
-
+                        .successHandler(authenticationSuccessHandler)
+                )
                 .logout(logout -> logout.permitAll());
         return http.build();
-
-    }
-}
-
+    }}

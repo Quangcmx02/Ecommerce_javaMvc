@@ -1,6 +1,7 @@
 package com.example.demo.Controller;
 
 import ch.qos.logback.classic.Logger;
+import com.example.demo.Dto.Request.LoginRequestDTO;
 import com.example.demo.Dto.Request.RegisterRequestDTO;
 import com.example.demo.Entity.User;
 import com.example.demo.Service.LoggerService;
@@ -32,8 +33,8 @@ public class AuthController {
 
 
     @GetMapping("/auth/login")
-    public String login() {
-
+    public String login(Model model) {
+        model.addAttribute("loginRequest", new LoginRequestDTO());
         return "auth/login";
     }
     @GetMapping("/auth/register")
