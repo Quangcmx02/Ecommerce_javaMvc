@@ -1,67 +1,57 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>Admin Dashboard</title>
+    <title>Admin Dashboard | RED WINGS</title>
 </head>
 <body>
 <div th:replace="~{admin/layout :: adminLayout(~{::content})}">
     <th:block th:fragment="content">
         <div class="container-fluid">
-            <h1>Bảng điều khiển Admin</h1>
-            <p>Chào mừng đến với bảng điều khiển quản trị!</p>
+            <h2 class="mb-4">Admin Dashboard</h2>
 
-            <!-- Thống kê nhanh -->
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="card text-white bg-primary mb-3">
-                        <div class="card-header">Tổng số thể loại</div>
+            <!-- Hiển thị thông báo lỗi -->
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+            <!-- Thống kê -->
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="card text-white bg-primary">
                         <div class="card-body">
-                            <h5 class="card-title">10</h5>
-                            <p class="card-text">Số lượng thể loại hiện tại.</p>
-                            <a th:href="@{/admin/category/index}" class="btn btn-light">Xem chi tiết</a>
+                            <h5 class="card-title">Tổng sản phẩm</h5>
+                            <p class="card-text" th:text="${totalProducts}">0</p>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card text-white bg-success mb-3">
-                        <div class="card-header">Tổng số sản phẩm</div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-success">
                         <div class="card-body">
-                            <h5 class="card-title">50</h5>
-                            <p class="card-text">Số lượng sản phẩm hiện tại.</p>
-                            <a th:href="@{/admin/products}" class="btn btn-light">Xem chi tiết</a>
+                            <h5 class="card-title">Tổng danh mục</h5>
+                            <p class="card-text" th:text="${totalCategories}">0</p>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card text-white bg-warning mb-3">
-                        <div class="card-header">Tổng số đơn hàng</div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-warning">
                         <div class="card-body">
-                            <h5 class="card-title">20</h5>
-                            <p class="card-text">Số lượng đơn hàng đang xử lý.</p>
-                            <a th:href="@{/admin/orders}" class="btn btn-light">Xem chi tiết</a>
+                            <h5 class="card-title">Tổng đơn hàng</h5>
+                            <p class="card-text" th:text="${totalOrders}">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-info">
+                        <div class="card-body">
+                            <h5 class="card-title">Tổng người dùng</h5>
+                            <p class="card-text" th:text="${totalUsers}">0</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Liên kết nhanh -->
+            <!-- Có thể thêm biểu đồ hoặc thông tin khác -->
             <div class="mt-4">
-                <h3>Liên kết nhanh</h3>
-                <ul class="list-group">
-                    <li class="list-group-item">
-                        <a th:href="@{/admin/category/index}">Quản lý thể loại</a>
-                    </li>
-                    <li class="list-group-item">
-                        <a th:href="@{/admin/products}">Quản lý sản phẩm</a>
-                    </li>
-                    <li class="list-group-item">
-                        <a th:href="@{/admin/orders}">Quản lý đơn hàng</a>
-                    </li>
-                    <li class="list-group-item">
-                        <a th:href="@{/admin/users}">Quản lý người dùng</a>
-                    </li>
-                </ul>
+                <h4>Chào mừng đến với Admin Dashboard</h4>
+                <p>Quản lý sản phẩm, danh mục, đơn hàng, và người dùng từ đây.</p>
             </div>
         </div>
     </th:block>

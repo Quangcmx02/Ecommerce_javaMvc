@@ -3,6 +3,7 @@ package com.example.demo.Service.Impl;
 import com.example.demo.Entity.Category;
 import com.example.demo.Repository.CategoryRepository;
 import com.example.demo.Service.CategoryService;
+import com.example.demo.Service.LoggerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,7 +16,8 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Autowired
     private CategoryRepository categoryRepository;
-
+    @Autowired
+    private LoggerService loggerService;
     @Override
     public Page<Category> findByActiveTrue(Pageable pageable) {
         return categoryRepository.findByIsActiveTrue(pageable);
@@ -91,5 +93,14 @@ public class CategoryServiceImpl implements CategoryService {
             return categoryRepository.findByNameContainingIgnoreCase(keyword, pageable);
         }
         return categoryRepository.findByIsActiveAndNameContainingIgnoreCase(isActive, keyword, pageable);
+    }
+    @Override
+    public long count() {
+        try {
+            return categoryRepository.count();
+        } catch (Exception e) {
+            loggerService.logError("Lỗi khi đếm tổng số danh mục", e);
+            return 0;
+        }
     }
 }

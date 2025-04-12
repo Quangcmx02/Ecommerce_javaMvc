@@ -5,8 +5,11 @@ import com.example.demo.Repository.ProductRepository;
 import com.example.demo.Service.LoggerService;
 import com.example.demo.Service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.data.web.SpringDataWebProperties;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,6 +22,15 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private LoggerService loggerService;
+    @Override
+    public long count() {
+        try {
+            return productRepository.count();
+        } catch (Exception e) {
+            loggerService.logError("Lỗi khi đếm tổng số sản phẩm", e);
+            return 0;
+        }
+    }
     @Override
     public Optional<Product> findById(Long id) {
         try {
@@ -126,5 +138,55 @@ public class ProductServiceImpl implements ProductService {
             return false;
         }
     }
+    @Override
+    public Page<Product> searchProducts(String keyword, String sortByPrice, Long categoryId, Pageable pageable) {
+        try {
+            Sort sort = Sort.unsorted();
+            if (sortByPrice != null && !sortByPrice.isEmpty()) {
+                sort = sortByPrice.equals("highToLow") ?
+                        Sort.by(Sort.Direction.DESC, "price") :
+                        Sort.by(Sort.Direction.ASC, "price");
+            }
 
-}
+            Pageable sortedPageable = PageRequest.of(
+                    pageable.getPageNumber(),
+                    pageable.getPageSize(),
+                    sort
+            );
+
+            if (categoryId != null) {
+                // Lọc theo danh mục
+                if (keyword == null || keyword.trim().isEmpty()) {
+                    return productRepository.findByCategory_CategoryId(categoryId, sortedPageable);
+                } else {
+                    return productRepository.findByCategory_CategoryIdAndNameContainingIgnoreCase(
+                            categoryId, keyword, sortedPageable);
+                }
+            } else {
+                // Không có danh mục
+                if (keyword == null || keyword.trim().isEmpty()) {
+                    return productRepository.findByIsActiveTrue(sortedPageable);
+                } else {
+                    return productRepository.findByNameContainingIgnoreCaseAndIsActiveTrue(keyword, sortedPageable);
+                }
+            }
+        } catch (Exception e) {
+            loggerService.logError("Lỗi khi tìm kiếm sản phẩm: keyword=" + keyword + ", sortByPrice=" + sortByPrice + ", categoryId=" + categoryId, e);
+            return Page.empty();
+        }
+    }@Override
+    public Page<Product> searchProductsForAdmin(String keyword, boolean isActive, Pageable pageable) {
+        try {
+            if (keyword == null || keyword.trim().isEmpty()) {
+                return isActive ? productRepository.findByIsActiveTrue(pageable) :
+                        productRepository.findByIsActiveFalse(pageable);
+            }
+            return productRepository.findByNameContainingIgnoreCaseAndIsActive(keyword, isActive, pageable);
+        } catch (Exception e) {
+            loggerService.logError("Lỗi khi tìm kiếm sản phẩm cho admin: keyword=" + keyword + ", isActive=" + isActive, e);
+            return Page.empty();
+        }
+    }
+    }
+
+

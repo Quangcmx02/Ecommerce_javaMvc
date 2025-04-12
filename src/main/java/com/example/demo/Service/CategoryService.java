@@ -23,6 +23,6 @@ public interface CategoryService {
     Optional<Category> findById(Long id);
 
     void deleteById(Long id);
-
+    long count();
     Page<Category> searchCategories(String keyword, Boolean isActive, Pageable pageable);
 }

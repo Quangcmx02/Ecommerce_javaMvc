@@ -1,71 +1,108 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>Danh sách sản phẩm</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Quản lý sản phẩm | RED WINGS</title>
 </head>
 <body>
-<div th:insert="~{layout :: layout(~{::content})}">
+<div th:replace="~{admin/layout :: adminLayout(~{::content})}">
     <th:block th:fragment="content">
-        <div class="container mt-5">
-            <h1>Danh sách sản phẩm</h1>
-
-            <!-- Bộ lọc active -->
-            <form method="get" action="/admin/products">
-                <label><input type="radio" name="active" value="true" th:checked="${activeFilter}" onchange="this.form.submit()"> Active</label>
-                <label><input type="radio" name="active" value="false" th:checked="${!activeFilter}" onchange="this.form.submit()"> Inactive</label>
-            </form>
+        <div class="container-fluid">
+            <h2 class="mb-4">Quản lý sản phẩm</h2>
 
             <!-- Thông báo -->
-            <div th:if="${success}" class="alert alert-success">[[${success}]]</div>
-            <div th:if="${error}" class="alert alert-danger">[[${error}]]</div>
+            <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
-            <!-- Bảng sản phẩm -->
-            <table class="table table-bordered">
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Tên</th>
-                    <th>Giá</th>
-                    <th>Trạng thái</th>
-                    <th>Hành động</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="product : ${products}">
-                    <td>[[${product.name}]]</td>
-                    <td>[[${product.name}]]</td>
-                    <td>[[${product.price}]]</td>
-                    <td>[[${product.active ? 'Active' : 'Inactive'}]]</td>
-                    <td>
-                        <a th:href="@{/admin/products/edit/{id}(id=${product.id})}" class="btn btn-sm btn-primary">Sửa</a>
-                        <form th:action="@{/admin/products/toggle-active/{id}(id=${product.id})}" method="post" style="display:inline;">
-                            <button type="submit" class="btn btn-sm" th:class="${product.active} ? 'btn-danger' : 'btn-success'">
-                                [[${product.active ? 'Vô hiệu hóa' : 'Kích hoạt'}]]
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+            <!-- Form tìm kiếm và lọc -->
+            <form th:action="@{/admin/product/index}" method="get" class="mb-4">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-4">
+                        <input type="text" name="keyword" class="form-control" th:value="${keyword}"
+                               placeholder="Tìm kiếm theo tên sản phẩm">
+                    </div>
+                    <div class="col-md-3">
+                        <select name="active" class="form-control">
+                            <option value="true" th:selected="${activeFilter == true}">Đang hoạt động</option>
+                            <option value="false" th:selected="${activeFilter == false}">Không hoạt động</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">Tìm kiếm</button>
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <a th:href="@{/admin/product/create}" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Thêm sản phẩm
+                        </a>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Danh sách sản phẩm -->
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên</th>
+                        <th>Giá</th>
+                        <th>Số lượng</th>
+                        <th>Danh mục</th>
+                        <th>Trạng thái</th>
+                        <th>Hành động</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="product : ${products}">
+                        <td th:text="${product.productId}"></td>
+                        <td th:text="${product.name}"></td>
+                        <td th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></td>
+                        <td th:text="${product.quantity}"></td>
+                        <td th:text="${product.category?.name ?: 'Không có'}"></td>
+                        <td>
+                                <span th:class="${product.active} ? 'badge bg-success' : 'badge bg-danger'"
+                                      th:text="${product.active} ? 'Hoạt động' : 'Không hoạt động'"></span>
+                        </td>
+                        <td>
+                            <a th:href="@{/admin/product/edit/{id}(id=${product.productId})}"
+                               class="btn btn-sm btn-primary">
+                                <i class="fas fa-edit"></i> Sửa
+                            </a>
+                            <form th:action="@{/admin/product/delete/{id}(id=${product.productId})}"
+                                  method="post" style="display:inline;"
+                                  onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm này?');">
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i> Xóa
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${products.isEmpty()}">
+                        <td colspan="7" class="text-center">Không tìm thấy sản phẩm nào.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
 
             <!-- Phân trang -->
-            <nav>
-                <ul class="pagination">
-                    <li class="page-item" th:class="${!hasPrevious} ? 'disabled'">
-                        <a class="page-link" th:href="@{/admin/products(page=${previousPage}, active=${activeFilter})}">Trước</a>
+            <nav th:if="${pageNumbers != null and pageNumbers.size() > 1}" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item" th:classappend="${!hasPrevious} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/admin/product/index(page=${previousPage},keyword=${keyword},active=${activeFilter})}">Trước</a>
                     </li>
-                    <li class="page-item" th:each="pageNum : ${pageNumbers}" th:class="${pageNum == currentPage} ? 'active'">
-                        <a class="page-link" th:href="@{/admin/products(page=${pageNum}, active=${activeFilter})}">[[${pageNum + 1}]]</a>
+                    <li class="page-item"
+                        th:each="i : ${pageNumbers}"
+                        th:classappend="${currentPage == i} ? 'active'">
+                        <a class="page-link"
+                           th:href="@{/admin/product/index(page=${i},keyword=${keyword},active=${activeFilter})}"
+                           th:text="${i + 1}">1</a>
                     </li>
-                    <li class="page-item" th:class="${!hasNext} ? 'disabled'">
-                        <a class="page-link" th:href="@{/admin/products(page=${nextPage}, active=${activeFilter})}">Sau</a>
+                    <li class="page-item" th:classappend="${!hasNext} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/admin/product/index(page=${nextPage},keyword=${keyword},active=${activeFilter})}">Tiếp</a>
                     </li>
                 </ul>
             </nav>
-
-            <a th:href="@{/admin/products/create}" class="btn btn-success">Tạo sản phẩm mới</a>
         </div>
     </th:block>
 </div>

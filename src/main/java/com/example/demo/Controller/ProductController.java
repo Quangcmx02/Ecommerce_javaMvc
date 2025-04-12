@@ -1,6 +1,8 @@
 package com.example.demo.Controller;
 
 import com.example.demo.Entity.Product;
+import com.example.demo.Service.CategoryService;
+import com.example.demo.Service.LoggerService;
 import com.example.demo.Service.ProductService;
 import com.example.demo.Utils.PageUtils;
 import jakarta.validation.Valid;
@@ -21,106 +23,152 @@ import java.util.Optional;
 public class ProductController {
     @Autowired
     private ProductService productService;
+@Autowired
 
-    @GetMapping
+private LoggerService loggerService;
+@Autowired
+private CategoryService categoryService;
+    @GetMapping("/index")
     public String listProducts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "true") boolean active,
+            @RequestParam(required = false) String keyword,
             Model model) {
-        int pageSize = 10; // Số sản phẩm mỗi trang
-        Pageable pageable = PageRequest.of(page, pageSize);
-        Page<Product> productPage;
+        try {
+            int pageSize = 10;
+            Pageable pageable = PageRequest.of(page, pageSize);
+            Page<Product> productPage = productService.searchProductsForAdmin(keyword, active, pageable);
 
-        // Lọc theo trạng thái active
-        if (active) {
-            productPage = productService.findByActiveTrue(pageable);
-        } else {
-            productPage = productService.findByActiveFalse(pageable);
+            model.addAttribute("products", productPage.getContent());
+            model.addAttribute("currentPage", productPage.getNumber());
+            model.addAttribute("pageNumbers", PageUtils.getPageNumbers(productPage));
+            model.addAttribute("hasPrevious", PageUtils.hasPrevious(productPage));
+            model.addAttribute("hasNext", PageUtils.hasNext(productPage));
+            model.addAttribute("previousPage", PageUtils.getPreviousPage(productPage));
+            model.addAttribute("nextPage", PageUtils.getNextPage(productPage));
+            model.addAttribute("activeFilter", active);
+            model.addAttribute("keyword", keyword);
+            model.addAttribute("currentPageName", "products"); // Cho sidebar active
+
+        } catch (Exception e) {
+            loggerService.logError("Lỗi khi hiển thị danh sách sản phẩm", e);
+            model.addAttribute("error", "Đã xảy ra lỗi khi tải danh sách sản phẩm.");
         }
 
-        model.addAttribute("products", productPage.getContent());
-        model.addAttribute("currentPage", productPage.getNumber());
-        model.addAttribute("pageNumbers", PageUtils.getPageNumbers(productPage));
-        model.addAttribute("hasPrevious", PageUtils.hasPrevious(productPage));
-        model.addAttribute("hasNext", PageUtils.hasNext(productPage));
-        model.addAttribute("previousPage", PageUtils.getPreviousPage(productPage));
-        model.addAttribute("nextPage", PageUtils.getNextPage(productPage));
-        model.addAttribute("activeFilter", active); // Để giữ trạng thái bộ lọc trên UI
-
-        return "index";
+        return "admin/product/index";
     }
 
-    // Hiển thị form tạo sản phẩm mới
     @GetMapping("/create")
     public String showCreateForm(Model model) {
-        model.addAttribute("product", new Product());
+        try {
+            model.addAttribute("product", new Product());
+            model.addAttribute("categories", categoryService.findAll());
+            model.addAttribute("currentPage", "products");
+
+        } catch (Exception e) {
+            loggerService.logError("Lỗi khi hiển thị form tạo sản phẩm", e);
+            model.addAttribute("error", "Đã xảy ra lỗi khi tải form tạo sản phẩm.");
+        }
+
         return "admin/product/create";
     }
 
-    // Xử lý tạo sản phẩm mới
     @PostMapping("/create")
     public String createProduct(
             @Valid @ModelAttribute("product") Product product,
             BindingResult result,
+            Model model,
             RedirectAttributes redirectAttributes) {
-        if (result.hasErrors()) {
+        try {
+            if (result.hasErrors()) {
+                model.addAttribute("categories", categoryService.findAll());
+                return "admin/product/create";
+            }
+
+            productService.save(product);
+            redirectAttributes.addFlashAttribute("message", "Tạo sản phẩm thành công!");
+            return "redirect:/admin/product/index";
+
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("error", e.getMessage());
+            model.addAttribute("categories", categoryService.findAll());
+            return "admin/product/create";
+        } catch (Exception e) {
+            loggerService.logError("Lỗi khi tạo sản phẩm", e);
+            model.addAttribute("error", "Đã xảy ra lỗi khi tạo sản phẩm.");
+            model.addAttribute("categories", categoryService.findAll());
             return "admin/product/create";
         }
-
-        product.setActive(true); // Mặc định sản phẩm mới là active
-        productService.save(product);
-        redirectAttributes.addFlashAttribute("success", "Tạo sản phẩm thành công!");
-        return "redirect:/admin/product";
     }
 
-    // Hiển thị form chỉnh sửa sản phẩm
     @GetMapping("/edit/{id}")
-    public String showEditForm(@PathVariable("id") Long id, Model model, RedirectAttributes redirectAttributes) {
-        Optional<Product> product = productService.findById(id);
-        if (product.isPresent()) {
-            model.addAttribute("product", product.get());
-            return "admin/products/edit";
-        } else {
-            redirectAttributes.addFlashAttribute("error", "Sản phẩm không tồn tại!");
-            return "redirect:/admin/product";
+    public String showEditForm(@PathVariable("id") Long id, Model model) {
+        try {
+            Optional<Product> product = productService.findById(id);
+            if (product.isPresent()) {
+                model.addAttribute("product", product.get());
+                model.addAttribute("categories", categoryService.findAll());
+                model.addAttribute("currentPage", "products");
+                return "admin/product/edit";
+            } else {
+                return "redirect:/admin/product/index";
+            }
+
+        } catch (Exception e) {
+            loggerService.logError("Lỗi khi hiển thị form chỉnh sửa sản phẩm ID: " + id, e);
+            model.addAttribute("error", "Đã xảy ra lỗi khi tải form chỉnh sửa.");
+            return "redirect:/admin/product/index";
         }
     }
 
-    // Xử lý cập nhật sản phẩm
     @PostMapping("/edit/{id}")
     public String updateProduct(
             @PathVariable("id") Long id,
-            @Valid @ModelAttribute("product") Product updatedProduct,
+            @Valid @ModelAttribute("product") Product product,
             BindingResult result,
+            Model model,
             RedirectAttributes redirectAttributes) {
-        if (result.hasErrors()) {
+        try {
+            if (result.hasErrors()) {
+                model.addAttribute("categories", categoryService.findAll());
+                return "admin/product/edit";
+            }
+
+            Optional<Product> updatedProduct = productService.update(id, product);
+            if (updatedProduct.isPresent()) {
+                redirectAttributes.addFlashAttribute("message", "Cập nhật sản phẩm thành công!");
+                return "redirect:/admin/product/index";
+            } else {
+                model.addAttribute("error", "Không tìm thấy sản phẩm để cập nhật.");
+                model.addAttribute("categories", categoryService.findAll());
+                return "admin/product/edit";
+            }
+
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("error", e.getMessage());
+            model.addAttribute("categories", categoryService.findAll());
+            return "admin/product/edit";
+        } catch (Exception e) {
+            loggerService.logError("Lỗi khi cập nhật sản phẩm ID: " + id, e);
+            model.addAttribute("error", "Đã xảy ra lỗi khi cập nhật sản phẩm.");
+            model.addAttribute("categories", categoryService.findAll());
             return "admin/product/edit";
         }
-
-        Optional<Product> updated = productService.update(id, updatedProduct);
-        if (updated.isPresent()) {
-            redirectAttributes.addFlashAttribute("success", "Cập nhật sản phẩm thành công!");
-        } else {
-            redirectAttributes.addFlashAttribute("error", "Không thể cập nhật sản phẩm!");
-        }
-        return "redirect:/admin/product";
     }
 
-    // Kích hoạt/vô hiệu hóa sản phẩm
-    @PostMapping("/toggle-active/{id}")
-    public String toggleActive(
-            @PathVariable("id") Long id,
-            RedirectAttributes redirectAttributes) {
-        Optional<Product> productOpt = productService.findById(id);
-        if (productOpt.isPresent()) {
-            Product product = productOpt.get();
-            product.setActive(!product.isActive()); // Đổi trạng thái active
-            productService.save(product);
-            redirectAttributes.addFlashAttribute("success",
-                    product.isActive() ? "Kích hoạt sản phẩm thành công!" : "Vô hiệu hóa sản phẩm thành công!");
-        } else {
-            redirectAttributes.addFlashAttribute("error", "Sản phẩm không tồn tại!");
+    @PostMapping("/delete/{id}")
+    public String deleteProduct(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+        try {
+            boolean deleted = productService.delete(id);
+            if (deleted) {
+                redirectAttributes.addFlashAttribute("message", "Xóa sản phẩm thành công!");
+            } else {
+                redirectAttributes.addFlashAttribute("error", "Không tìm thấy sản phẩm để xóa.");
+            }
+        } catch (Exception e) {
+            loggerService.logError("Lỗi khi xóa sản phẩm ID: " + id, e);
+            redirectAttributes.addFlashAttribute("error", "Đã xảy ra lỗi khi xóa sản phẩm.");
         }
-        return "redirect:/admin/product";
+        return "redirect:/admin/product/index";
     }
 }
