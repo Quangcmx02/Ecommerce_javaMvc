@@ -23,12 +23,11 @@ public class Order {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    // Danh sách chi tiết đơn hàng
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderDetail> orderDetails;
 
     private Double totalAmount;
-
+    private String address;;
     private  Status status;
 
     @CreationTimestamp

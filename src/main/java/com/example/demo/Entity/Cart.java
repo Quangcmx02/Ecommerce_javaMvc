@@ -19,7 +19,7 @@ import java.util.List;
 public class Cart {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long CartId;
+    private Long cartId;
 
     // Một User có 1 Cart
     @OneToOne
@@ -30,8 +30,8 @@ public class Cart {
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CartItem> cartItems;
 
-    private Date CreatedAt;
-    private Date UpdatedAt;
+    private Date createdAt;
+    private Date updatedAt;
 
 
 }

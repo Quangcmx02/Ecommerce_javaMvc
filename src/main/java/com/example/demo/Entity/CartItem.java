@@ -12,7 +12,7 @@ public class CartItem {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "CartItem_Id", nullable = false)
-    private Long CartItem_Id;
+    private Long cartItem_Id;
     // 1 cart có nhiueu item
     @ManyToOne
     @JoinColumn(name = "cart_id", nullable = false)
@@ -22,7 +22,7 @@ public class CartItem {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    private int Quantity;
-    private double Price;
+    private int quantity;
+    private double price;
 
 }

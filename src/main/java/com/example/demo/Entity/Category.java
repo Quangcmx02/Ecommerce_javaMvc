@@ -12,9 +12,9 @@ public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "CategoryId", nullable = false)
-    private Long CategoryId;
-    private String Name;
-    private String Description;
-    private String ImageLink;
-    private Boolean Status;
+    private Long categoryId;
+    private String name;
+    private String description;
+    private String imageLink;
+    private Boolean isActive;
 }

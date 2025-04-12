@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý thể loại</title>
+</head>
+<body>
+<div th:replace="~{admin/layout :: adminLayout(~{::content})}">
+    <th:block th:fragment="content">
+        <div class="container-fluid">
+            <h1>Quản lý thể loại</h1>
+
+            <!-- Thông báo lỗi -->
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+            <!-- Form lọc và tìm kiếm -->
+            <form th:action="@{/admin/category/index}" method="get" class="mb-3">
+                <div class="row">
+                    <div class="col-md-4">
+                        <input type="text" name="keyword" class="form-control" th:value="${keyword}"
+                               placeholder="Tìm kiếm theo tên danh mục">
+                    </div>
+                    <div class="col-md-4">
+                        <select name="isActive" class="form-control">
+                            <option value="" th:selected="${isActive == null}">Tất cả</option>
+                            <option value="true" th:selected="${isActive == true}">Kích hoạt</option>
+                            <option value="false" th:selected="${isActive == false}">Không kích hoạt</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary">Lọc</button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Nút tạo danh mục mới -->
+            <a th:href="@{/admin/category/create}" class="btn btn-primary mb-3">
+                <i class="fas fa-plus"></i> Thêm thể loại
+            </a>
+
+            <!-- Bảng danh mục -->
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên</th>
+                    <th>Mô tả</th>
+                    <th>Hình ảnh</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="category : ${categories.content}">
+                    <td th:text="${category.categoryId}"></td>
+                    <td th:text="${category.name}"></td>
+                    <td th:text="${category.description}"></td>
+                    <td>
+                        <img th:if="${category.imageLink}" th:src="${category.imageLink}" width="50" alt="Category Image"/>
+                    </td>
+                    <td th:text="${category.isActive} ? 'Kích hoạt' : 'Không kích hoạt'"></td>
+                    <td>
+                        <a th:href="@{/admin/category/edit/{id}(id=${category.categoryId})}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i> Sửa
+                        </a>
+                        <a th:href="@{/admin/category/delete/{id}(id=${category.categoryId})}" class="btn btn-sm btn-danger"
+                           onclick="return confirm('Bạn có chắc muốn xóa danh mục này?')">
+                            <i class="fas fa-trash"></i> Xóa
+                        </a>
+                    </td>
+                </tr>
+                <tr th:if="${categories.content.isEmpty()}">
+                    <td colspan="6" class="text-center">Không có danh mục nào</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <!-- Phân trang -->
+            <nav th:if="${categories.totalPages > 1}">
+                <ul class="pagination">
+                    <li class="page-item" th:class="${!hasPrevious} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/admin/category/index(page=${previousPage},keyword=${keyword},isActive=${isActive})}">Trước</a>
+                    </li>
+                    <li class="page-item" th:each="pageNumber : ${pageNumbers}"
+                        th:class="${pageNumber == categories.number} ? 'active'">
+                        <a class="page-link"
+                           th:href="@{/admin/category/index(page=${pageNumber},keyword=${keyword},isActive=${isActive})}"
+                           th:text="${pageNumber + 1}"></a>
+                    </li>
+                    <li class="page-item" th:class="${!hasNext} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/admin/category/index(page=${nextPage},keyword=${keyword},isActive=${isActive})}">Sau</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </th:block>
+</div>
+</body>
+</html>

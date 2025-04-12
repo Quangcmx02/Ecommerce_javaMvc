@@ -11,7 +11,6 @@ public class PageUtils {
         int currentPage = page.getNumber();
         List<Integer> pageNumbers = new ArrayList<>();
 
-        // Tạo danh sách số trang từ 0 đến totalPages-1
         for (int i = 0; i < totalPages; i++) {
             pageNumbers.add(i);
         }

@@ -18,6 +18,7 @@
         <!-- Thông tin chi tiết -->
         <div class="col-md-8">
             <h2 th:text="${product.name}"></h2>
+            <h2 th:text="${product.size}"></h2>
             <p th:text="${product.description}"></p>
             <h4>Giá: <span th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></span></h4>
             <p>Còn lại: <span th:text="${product.quantity}"></span> sản phẩm</p>
