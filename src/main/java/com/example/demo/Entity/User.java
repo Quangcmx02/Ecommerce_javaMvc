@@ -35,7 +35,11 @@ public class User {
     @NotBlank(message = "Mật khẩu không được để trống")
     @Size(min = 6, message = "Mật khẩu phải có ít nhất 6 ký tự")
     private String password;
+    @Column(name = "is_active")
+    private Boolean isActive = false;
 
+    @Column(name = "activation_token")
+    private String activationToken;
     private String role;
     private String imgLink;
     private String adress;

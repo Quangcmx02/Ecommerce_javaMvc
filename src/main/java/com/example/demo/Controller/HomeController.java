@@ -60,17 +60,18 @@ public class HomeController {
     }
 
     @GetMapping("/product/detail/{id}")
-    public String showProductDetail(@PathVariable("id") Long id, Model model) {
+    public String showProductDetail(@PathVariable("id") Long id, Model model, @RequestParam(required = false) String errorMessage) {
         Optional<Product> product = productService.findById(id);
-
         if (product.isPresent()) {
             model.addAttribute("product", product.get());
+            if (errorMessage != null) {
+                model.addAttribute("errorMessage", errorMessage);
+            }
             return "product/detail";
         } else {
             return "redirect:/home";
         }
     }
-
     @GetMapping("/category")
     public String category(Model model,
                            @RequestParam(defaultValue = "0") int page) {

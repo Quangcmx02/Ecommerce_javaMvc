@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Logger;
 import com.example.demo.Dto.Request.LoginRequestDTO;
 import com.example.demo.Dto.Request.RegisterRequestDTO;
 import com.example.demo.Entity.User;
+import com.example.demo.Service.EmailService;
 import com.example.demo.Service.LoggerService;
 import com.example.demo.Service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,7 +31,8 @@ public class AuthController {
     UserService userService;
     @Autowired
     private LoggerService loggerService;
-
+    @Autowired
+    private EmailService emailService;
 
     @GetMapping("/auth/login")
     public String login(Model model) {
@@ -89,8 +91,22 @@ public class AuthController {
         try {
             User savedUser = userService.saveUser(user);
             if (!ObjectUtils.isEmpty(savedUser)) {
+                String activationLink = String.format(
+                        "http://%s:%s/auth/activate?token=%s",
+                        request.getServerName(),
+                        request.getServerPort(),
+                        savedUser.getActivationToken()
+                );
+                emailService.sendActivationEmail(
+                        savedUser.getEmail(),
+                        "Kích hoạt tài khoản RED WINGS",
+                        activationLink
+                );
                 loggerService.logInfo("User registered successfully: " + savedUser.getEmail());
-                redirectAttributes.addFlashAttribute("successMsg", "Đăng ký tài khoản thành công!");
+                redirectAttributes.addFlashAttribute(
+                        "successMsg",
+                        "Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản."
+                );
             } else {
                 loggerService.logError("Failed to save user: empty result");
                 redirectAttributes.addFlashAttribute("errorMsg", "Có lỗi xảy ra trên server!");
@@ -100,5 +116,50 @@ public class AuthController {
             redirectAttributes.addFlashAttribute("errorMsg", "Đăng ký thất bại: " + e.getMessage());
         }
         return "redirect:/auth/register";
+    }
+    @GetMapping("/auth/activate")
+    public String activateAccount(@RequestParam("token") String token, RedirectAttributes redirectAttributes) {
+        try {
+            boolean activated = userService.activateUser(token);
+            if (activated) {
+                redirectAttributes.addFlashAttribute("successMsg", "Tài khoản đã được kích hoạt! Vui lòng đăng nhập.");
+                return "redirect:/auth/login";
+            } else {
+                redirectAttributes.addFlashAttribute("errorMsg", "Mã kích hoạt không hợp lệ hoặc đã hết hạn.");
+                return "redirect:/auth/register";
+            }
+        } catch (Exception e) {
+            loggerService.logError("Activation failed for token: " + token, e);
+            redirectAttributes.addFlashAttribute("errorMsg", "Kích hoạt tài khoản thất bại: " + e.getMessage());
+            return "redirect:/auth/register";
+        }
+    }
+    @GetMapping("/auth/forgot-password")
+    public String showForgotPasswordForm(Model model) {
+        model.addAttribute("email", "");
+        return "auth/forgot-password";
+    }
+    @PostMapping("/auth/forgot_password")
+    public String processForgotPassword(
+            @RequestParam("email") String email,
+            RedirectAttributes redirectAttributes) {
+        loggerService.logInfo("Processing forgot password for email: " + email);
+        try {
+            boolean success = userService.resetPassword(email);
+            if (success) {
+                loggerService.logInfo("Password reset email sent to: " + email);
+                redirectAttributes.addFlashAttribute(
+                        "successMsg",
+                        "Mật khẩu mới đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư."
+                );
+            } else {
+                loggerService.logWarning("No user found with email: " + email);
+                redirectAttributes.addFlashAttribute("errorMsg", "Không tìm thấy tài khoản với email này.");
+            }
+        } catch (Exception e) {
+            loggerService.logError("Forgot password failed for email: " + email, e);
+            redirectAttributes.addFlashAttribute("errorMsg", "Không thể gửi email mật khẩu mới: " + e.getMessage());
+        }
+        return "redirect:/auth/forgot-password";
     }
 }
