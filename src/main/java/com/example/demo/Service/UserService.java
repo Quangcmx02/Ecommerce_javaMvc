@@ -12,4 +12,7 @@ import com.example.demo.Entity.User;
         void userAccountLock(User user);
         boolean isUnlockAccountTimeExpired(User user);
         void userFailedAttempt(int userId);
+        boolean resetPassword(String email);
+        boolean activateUser(String token);
+        User getUserById(Long userId);
 }
