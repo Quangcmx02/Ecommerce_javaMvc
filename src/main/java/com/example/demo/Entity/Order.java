@@ -33,5 +33,7 @@ public class Order {
     @CreationTimestamp
     private LocalDateTime createdAt;
 
+    @UpdateTimestamp
+private LocalDateTime updatedAt;
 
 }

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Chi tiết đơn hàng | RED WINGS</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div  th:replace="~{admin/layout :: adminLayout(~{::content})}">
+  <th:block th:fragment="content">
+    <section>
+      <div class="container mt-5 p-5">
+        <h2 class="text-center mb-4">Chi tiết đơn hàng</h2>
+        <div th:if="${successMsg}" class="alert alert-success text-center" th:text="${successMsg}"></div>
+        <div th:if="${errorMsg}" class="alert alert-danger text-center" th:text="${errorMsg}"></div>
+
+        <div th:if="${order != null}">
+          <h4>Thông tin đơn hàng</h4>
+          <p><strong>Mã đơn hàng:</strong> <span th:text="${order.OrderId}"></span></p>
+          <p><strong>Người đặt:</strong> <span th:text="${order.user.email}"></span></p>
+          <p><strong>Địa chỉ giao hàng:</strong> <span th:text="${order.address}"></span></p>
+          <p><strong>Trạng thái:</strong> <span th:text="${order.status.getDisplayName()}"></span></p>
+          <p><strong>Ngày tạo:</strong> <span th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></span></p>
+          <p><strong>Ngày cập nhật:</strong> <span th:text="${#temporals.format(order.updatedAt, 'dd/MM/yyyy HH:mm')}"></span></p>
+          <p><strong>Tổng tiền:</strong> <span th:text="${#numbers.formatCurrency(order.totalAmount)}"></span></p>
+
+          <!-- Form thay đổi trạng thái -->
+          <div th:if="${order.status != T(com.example.demo.Entity.Status).CANCELLED and order.status != T(com.example.demo.Entity.Status).SHIPPED}">
+            <h4 class="mt-4">Thay đổi trạng thái</h4>
+            <form th:action="@{/admin/orders/update-status/{id}(id=${order.OrderId})}" method="post">
+              <div class="mb-3">
+                <label for="status" class="form-label">Trạng thái mới</label>
+                <select id="status" name="status" class="form-select">
+                  <option th:each="status : ${availableStatuses}"
+                          th:value="${status}"
+                          th:text="${status.getDisplayName()}"></option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary">Cập nhật trạng thái</button>
+            </form>
+          </div>
+
+          <!-- Nút hủy đơn hàng -->
+          <div th:if="${order.status == T(com.example.demo.Entity.Status).PAID}" class="mt-3">
+            <form th:action="@{/admin/orders/cancel/{id}(id=${order.OrderId})}" method="post"
+                  onsubmit="return confirm('Bạn có chắc muốn hủy đơn hàng này?');">
+              <button type="submit" class="btn btn-danger">Hủy đơn hàng</button>
+            </form>
+          </div>
+
+          <h4 class="mt-4">Sản phẩm trong đơn hàng</h4>
+          <table class="table table-bordered">
+            <thead>
+            <tr>
+              <th>Sản phẩm</th>
+              <th>Giá</th>
+              <th>Số lượng</th>
+              <th>Tổng</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="detail : ${order.orderDetails}">
+              <td th:text="${detail.product.name}"></td>
+              <td th:text="${#numbers.formatCurrency(detail.price)}"></td>
+              <td th:text="${detail.quantity}"></td>
+              <td th:text="${#numbers.formatCurrency(detail.amount)}"></td>
+            </tr>
+            </tbody>
+          </table>
+
+          <div class="text-end">
+            <a th:href="@{/admin/orders/order}" class="btn btn-secondary">Quay lại danh sách đơn hàng</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </th:block>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

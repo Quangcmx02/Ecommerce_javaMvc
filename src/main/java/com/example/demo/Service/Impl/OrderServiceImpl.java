@@ -11,6 +11,8 @@ import jakarta.transaction.Transactional;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -109,5 +111,117 @@ public class OrderServiceImpl implements OrderService {
         loggerService.logInfo("Order placed successfully for userId: " + userId + ", orderId: " + savedOrder.getOrderId());
 
         return savedOrder;
+    }
+    @Override
+    public Page<Order> getOrdersByUserId(Long userId, Pageable pageable) {
+        loggerService.logInfo("Fetching orders for userId: " + userId);
+        return orderRepository.findByUserUserId(userId, pageable);
+    }
+
+    @Override
+    public Order getOrderById(Long orderId) {
+        loggerService.logInfo("Fetching order with orderId: " + orderId);
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Đơn hàng không tồn tại: " + orderId));
+    }
+    @Override
+    @Transactional
+    public void cancelOrder(Long orderId, Long userId) {
+        loggerService.logInfo("Cancelling orderId: " + orderId + " for userId: " + userId);
+
+        // Lấy Order
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Đơn hàng không tồn tại: " + orderId));
+
+        // Kiểm tra quyền
+        if (!order.getUser().getUserId().equals(userId)) {
+            throw new SecurityException("Bạn không có quyền hủy đơn hàng này");
+        }
+
+        // Kiểm tra trạng thái
+        if (order.getStatus() != Status.PENDING) {
+            throw new IllegalStateException("Chỉ có thể hủy đơn hàng ở trạng thái Đang chờ xử lý");
+        }
+
+        // Khôi phục số lượng sản phẩm
+        for (OrderDetail detail : order.getOrderDetails()) {
+            Long productId = detail.getProduct().getProductId();
+            RLock lock = redissonClient.getLock("product:lock:" + productId);
+
+            try {
+                // Thử khóa trong 10 giây
+                if (!lock.tryLock(10, 30, TimeUnit.SECONDS)) {
+                    throw new IllegalStateException("Không thể khóa sản phẩm " + productId + ", vui lòng thử lại");
+                }
+
+                // Lấy Product
+                Product product = productService.findById(productId)
+                        .orElseThrow(() -> new EntityNotFoundException("Sản phẩm không tồn tại: " + productId));
+
+                // Khôi phục số lượng
+                product.setQuantity(product.getQuantity() + detail.getQuantity());
+                productService.save(product);
+
+                loggerService.logInfo("Restored quantity: " + detail.getQuantity() + " for productId: " + productId);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Lỗi khi khóa sản phẩm " + productId, e);
+            } finally {
+                if (lock.isHeldByCurrentThread()) {
+                    lock.unlock();
+                }
+            }
+        }
+
+        // Cập nhật trạng thái
+        order.setStatus(Status.CANCELLED);
+        orderRepository.save(order);
+
+        loggerService.logInfo("OrderId: " + orderId + " cancelled successfully for userId: " + userId);
+    }
+
+    @Override
+    public Page<Order> getAllOrders(Pageable pageable) {
+        loggerService.logInfo("Fetching all orders");
+        return orderRepository.findAll(pageable);
+    }
+
+    @Override
+    @Transactional
+    public void updateOrderStatus(Long orderId, Status newStatus) {
+        loggerService.logInfo("Updating status for orderId: " + orderId + " to " + newStatus);
+
+        // Lấy Order
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Đơn hàng không tồn tại: " + orderId));
+
+        // Kiểm tra trạng thái hợp lệ
+        if (!isValidStatusTransition(order.getStatus(), newStatus)) {
+            throw new IllegalStateException("Không thể chuyển từ " + order.getStatus().getDisplayName() + " sang " + newStatus.getDisplayName());
+        }
+
+        // Cập nhật trạng thái
+        order.setStatus(newStatus);
+        orderRepository.save(order);
+
+        loggerService.logInfo("OrderId: " + orderId + " status updated to " + newStatus);
+    }
+
+    private boolean isValidStatusTransition(Status currentStatus, Status newStatus) {
+        if (currentStatus == Status.CANCELLED || newStatus == Status.CANCELLED) {
+            return false; // Không cho phép chuyển sang hoặc từ CANCELLED
+        }
+        switch (currentStatus) {
+            case PENDING:
+                return newStatus == Status.PAID || newStatus == Status.DELIVERING || newStatus == Status.SHIPPED;
+            case PAID:
+                return newStatus == Status.DELIVERING || newStatus == Status.SHIPPED;
+            case DELIVERING:
+                return newStatus == Status.SHIPPED;
+            case SHIPPED:
+                return false; // Không cho phép chuyển từ SHIPPED
+            default:
+                return false;
+        }
     }
 }
