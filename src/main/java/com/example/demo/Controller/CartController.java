@@ -2,9 +2,11 @@ package com.example.demo.Controller;
 
 import com.example.demo.Entity.Cart;
 import com.example.demo.Entity.CartItem;
+import com.example.demo.Entity.Order;
 import com.example.demo.Entity.User;
 import com.example.demo.Service.CartService;
 import com.example.demo.Service.LoggerService;
+import com.example.demo.Service.OrderService;
 import com.example.demo.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -23,7 +25,10 @@ public class CartController {
     @Autowired
     private CartService cartService;
     @Autowired
+
     private UserService userService;
+    @Autowired
+    private OrderService orderService;
     @Autowired
     private LoggerService loggerService;
 
@@ -134,4 +139,48 @@ public class CartController {
             return "redirect:/product/detail/" + productId;
         }
     }
+    // Hiển thị trang thanh toán
+    @GetMapping("/checkout")
+    public String showCheckout(Model model) {
+        Long userId = getCurrentUserId();
+        try {
+            Cart cart = cartService.getCartByUserId(userId);
+            if (cart.getCartItems().isEmpty()) {
+                model.addAttribute("errorMsg", "Giỏ hàng trống, không thể thanh toán");
+                return "cart/cart";
+            }
+            double totalPrice = cart.getCartItems().stream()
+                    .mapToDouble(CartItem::getPrice)
+                    .sum();
+            model.addAttribute("cart", cart);
+            model.addAttribute("totalPrice", totalPrice);
+            loggerService.logInfo("Displayed checkout page for userId: " + userId);
+        } catch (Exception e) {
+            loggerService.logError("Failed to display checkout page for userId: " + userId, e);
+            model.addAttribute("errorMsg", "Không thể tải trang thanh toán: " + e.getMessage());
+        }
+        return "cart/checkout";
+    }
+
+    // Xử lý thanh toán
+    @PostMapping("/place-order")
+    public String placeOrder(@RequestParam("address") String address, RedirectAttributes redirectAttributes) {
+        Long userId = getCurrentUserId();
+        try {
+            Order order = orderService.placeOrder(userId, address);
+            redirectAttributes.addFlashAttribute("successMsg", "Đặt hàng thành công! Mã đơn hàng: " + order.getOrderId());
+            loggerService.logInfo("Order placed successfully for userId: " + userId + ", orderId: " + order.getOrderId());
+            return "redirect:/cart/cart";
+        } catch (IllegalStateException e) {
+            loggerService.logError("Failed to place order for userId: " + userId, e);
+            redirectAttributes.addFlashAttribute("errorMsg", e.getMessage());
+            return "redirect:/cart/checkout";
+        } catch (Exception e) {
+            loggerService.logError("Failed to place order for userId: " + userId, e);
+            redirectAttributes.addFlashAttribute("errorMsg", "Không thể đặt hàng: " + e.getMessage());
+            return "redirect:/cart/checkout";
+        }
+    }
+
+
 }

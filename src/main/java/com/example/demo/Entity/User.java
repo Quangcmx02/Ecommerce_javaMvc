@@ -36,6 +36,7 @@ public class User {
     @Size(min = 6, message = "Mật khẩu phải có ít nhất 6 ký tự")
     private String password;
     @Column(name = "is_active")
+    @Builder.Default
     private Boolean isActive = false;
 
     @Column(name = "activation_token")

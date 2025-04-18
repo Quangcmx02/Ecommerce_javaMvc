@@ -28,4 +28,5 @@ public interface ProductService {
     boolean delete(Long id);
     long count();
     Page<Product> searchProductsForAdmin(String keyword, boolean isActive, Pageable pageable);
+    
 }
