@@ -21,6 +21,8 @@ public class UserDetailsServiceImpl implements UserDetailsService{
 			throw new UsernameNotFoundException("User not found with email: " + email);
 		}if (!user.getIsActive()) {
 			throw new UsernameNotFoundException("User account is not activated: " + email);
+		} if (!user.getIsEnable()) {
+			throw new UsernameNotFoundException("Tài khoản bị khóa");
 		}
 		return org.springframework.security.core.userdetails.User
 				.withUsername(user.getEmail())

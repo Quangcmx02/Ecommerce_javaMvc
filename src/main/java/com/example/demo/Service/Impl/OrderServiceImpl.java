@@ -41,13 +41,13 @@ public class OrderServiceImpl implements OrderService {
     public Order placeOrder(Long userId, String address) {
         loggerService.logInfo("Placing order for userId: " + userId + ", address: " + address);
 
-        // Lấy Cart
+
         Cart cart = cartService.getCartByUserId(userId);
         if (cart.getCartItems().isEmpty()) {
             throw new IllegalStateException("Giỏ hàng trống, không thể thanh toán");
         }
 
-        // Tạo Order
+
         Order order = new Order();
         order.setUser(cart.getUser());
         order.setAddress(address);
@@ -209,7 +209,7 @@ public class OrderServiceImpl implements OrderService {
 
     private boolean isValidStatusTransition(Status currentStatus, Status newStatus) {
         if (currentStatus == Status.CANCELLED || newStatus == Status.CANCELLED) {
-            return false; // Không cho phép chuyển sang hoặc từ CANCELLED
+            return false;
         }
         switch (currentStatus) {
             case PENDING:
@@ -219,9 +219,18 @@ public class OrderServiceImpl implements OrderService {
             case DELIVERING:
                 return newStatus == Status.SHIPPED;
             case SHIPPED:
-                return false; // Không cho phép chuyển từ SHIPPED
+                return false;
             default:
                 return false;
+        }
+    }
+    @Override
+    public long count() {
+        try {
+            return orderRepository.count();
+        } catch (Exception e) {
+            loggerService.logError("Lỗi khi đếm tổng số đơn hàng", e);
+            return 0;
         }
     }
 }

@@ -159,5 +159,15 @@ private CartRepository cartRepository;
 
         return cartItem;
     }
+    @Override
+    public int countCartItems(Long userId) {
+        loggerService.logInfo("Counting cart items for userId: " + userId);
+        Cart cart = getCartByUserId(userId);
+        int totalItems = cart.getCartItems().stream()
+                .mapToInt(CartItem::getQuantity)
+                .sum();
+        loggerService.logInfo("Total cart items for userId: " + userId + " is " + totalItems);
+        return totalItems;
+    }
 }
 

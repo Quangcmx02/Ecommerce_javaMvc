@@ -1,8 +1,6 @@
 package com.example.demo.Controller;
 
-import com.example.demo.Service.CategoryService;
-import com.example.demo.Service.LoggerService;
-import com.example.demo.Service.ProductService;
+import com.example.demo.Service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,6 +19,10 @@ public class AdminController {
 
     @Autowired
     private LoggerService loggerService;
+    @Autowired
+    private OrderService orderService;
+    @Autowired
+    private UserService userService;
 
     @GetMapping("/home")
     public String adminHome(Model model) {
@@ -29,8 +31,8 @@ public class AdminController {
             long totalProducts = productService.count();
             long totalCategories = categoryService.count();
 
-            long totalOrders = 0; // Thay bằng orderService.count() nếu có
-            long totalUsers = 0;
+            long totalOrders = orderService.count() ;
+            long totalUsers = userService.count();
 
             model.addAttribute("totalProducts", totalProducts);
             model.addAttribute("totalCategories", totalCategories);

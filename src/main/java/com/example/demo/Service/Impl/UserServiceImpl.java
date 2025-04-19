@@ -1,5 +1,7 @@
 package com.example.demo.Service.Impl;
 
+import com.example.demo.Dto.Request.PasswordChangeDto;
+import com.example.demo.Dto.Request.UserProfileUpdateDto;
 import com.example.demo.Entity.User;
 import com.example.demo.Repository.UserRepository;
 import com.example.demo.Service.EmailService;
@@ -9,6 +11,8 @@ import com.example.demo.Utils.UserAuthUtlis;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -183,7 +187,76 @@ public class UserServiceImpl implements UserService {
         }
         return password.toString();
     }
+    @Override
+    public void changeUserPassword(Long userId, PasswordChangeDto dto) {
+        loggerService.logInfo("Changing password for userId: " + userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found for userId: " + userId));
 
+        // Kiểm tra mật khẩu cũ
+        if (!passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
+            loggerService.logWarning("Incorrect old password for userId: " + userId);
+            throw new IllegalArgumentException("Mật khẩu cũ không đúng");
+        }
 
+        // Kiểm tra mật khẩu mới và xác nhận
+        if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
+            loggerService.logWarning("New password and confirmation do not match for userId: " + userId);
+            throw new IllegalArgumentException("Mật khẩu mới và xác nhận không khớp");
+        }
+
+        // Cập nhật mật khẩu
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        userRepository.save(user);
+        loggerService.logInfo("Password changed successfully for userId: " + userId);
+    }
+    @Override
+    public void updateUserProfile(Long userId, UserProfileUpdateDto dto) {
+        loggerService.logInfo("Updating profile for userId: " + userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found for userId: " + userId));
+
+        user.setFirstName(dto.getFirstName());
+        user.setLastName(dto.getLastName());
+        user.setImgLink(dto.getImgLink());
+        user.setAdress(dto.getAddress());
+        userRepository.save(user);
+        loggerService.logInfo("Profile updated successfully for userId: " + userId);
+    }
+    @Override
+    public Page<User> getAllUsers(Pageable pageable) {
+        loggerService.logInfo("Fetching all users");
+        return userRepository.findAll(pageable);
+    }
+
+    @Override
+    public void updateUserRole(Long userId, String newRole, Long currentAdminId) {
+        loggerService.logInfo("Updating role for userId: " + userId + " to " + newRole);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found for userId: " + userId));
+
+        if (userId.equals(currentAdminId)) {
+            loggerService.logWarning("Admin attempted to change own role: userId=" + userId);
+            throw new IllegalStateException("Không thể thay đổi vai trò của chính bạn");
+        }
+
+        if (!newRole.equals("USER") && !newRole.equals("ADMIN")) {
+            loggerService.logWarning("Invalid role: " + newRole);
+            throw new IllegalArgumentException("Vai trò không hợp lệ: " + newRole);
+        }
+
+        user.setRole(newRole);
+        userRepository.save(user);
+        loggerService.logInfo("Role updated successfully for userId: " + userId + " to " + newRole);
+    }
+    @Override
+    public long count() {
+        try {
+            return userRepository.count();
+        } catch (Exception e) {
+            loggerService.logError("Lỗi khi đếm tổng số user", e);
+            return 0;
+        }
+    }
 
 }

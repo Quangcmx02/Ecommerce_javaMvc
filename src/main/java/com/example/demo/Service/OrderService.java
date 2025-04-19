@@ -12,4 +12,5 @@ public interface OrderService {
     void cancelOrder(Long orderId, Long userId);
     Page<Order> getAllOrders(Pageable pageable);
     void updateOrderStatus(Long orderId, Status newStatus);
+    long count();
 }

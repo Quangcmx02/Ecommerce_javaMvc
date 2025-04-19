@@ -38,7 +38,7 @@
         <!-- Khi đã đăng nhập -->
         <th:block sec:authorize="isAuthenticated()">
           <li class="nav-item">
-            <a class="nav-link active" href="/cart/cart"><i class="fas fa-cart-shopping"></i> Cart [ [[${countCartForUser ?: 0}]] ]</a>
+            <a class="nav-link active" href="/cart/cart"><i class="fas fa-cart-shopping"></i> Giỏ hàng  </a>
           </li>
 
           <li class="nav-item dropdown" th:if="${session.currentUser != null}">
@@ -49,7 +49,7 @@
               <li sec:authorize="hasRole('admin')">
                 <a class="dropdown-item" href="/admin/home">ADMIN</a>
               </li>
-              <li><a class="dropdown-item" href="/user/profile">Profile</a></li>
+              <li><a class="dropdown-item" href="/user/account">Profile</a></li>
               <li><a class="dropdown-item" href="/orders/order">Orders</a></li>
               <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
