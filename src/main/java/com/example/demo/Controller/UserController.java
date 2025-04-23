@@ -45,7 +45,7 @@ public class UserController {
             loggerService.logError("Failed to display account page for userId: " + userId, e);
             model.addAttribute("errorMsg", "Không thể tải thông tin tài khoản: " + e.getMessage());
         }
-        return "/user/account";
+        return "user/account";
     }
 
     @PostMapping("/update-profile")
@@ -56,7 +56,7 @@ public class UserController {
         Long userId = getCurrentUserId();
         if (result.hasErrors()) {
             loggerService.logWarning("Profile update validation errors for userId: " + userId);
-            return "/user/account";
+            return "user/account";
         }
 
         try {
@@ -78,7 +78,7 @@ public class UserController {
         Long userId = getCurrentUserId();
         if (result.hasErrors()) {
             loggerService.logWarning("Password change validation errors for userId: " + userId);
-            return "/user/account";
+            return "user/account";
         }
 
         try {

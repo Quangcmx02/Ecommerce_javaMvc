@@ -85,7 +85,7 @@ public class OrderServiceImpl implements OrderService {
                 orderDetail.setProduct(product);
                 orderDetail.setQuantity(requestedQuantity);
                 orderDetail.setPrice(cartItem.getPrice() / requestedQuantity); // Giá đơn vị
-                orderDetail.setAmount(cartItem.getPrice()); // Tổng giá
+                orderDetail.setAmount(cartItem.getPrice());
                 orderDetails.add(orderDetail);
 
                 // Cập nhật totalAmount
@@ -173,7 +173,7 @@ public class OrderServiceImpl implements OrderService {
             }
         }
 
-        // Cập nhật trạng thái
+
         order.setStatus(Status.CANCELLED);
         orderRepository.save(order);
 

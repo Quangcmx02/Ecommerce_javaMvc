@@ -28,7 +28,8 @@
                             <th>Vai trò</th>
                             <th>Địa chỉ</th>
                             <th>Trạng thái</th>
-                            <th>Hành động</th>
+                            <th>Cập nhật vai trò</th>
+                            <th>Trạng thái tài khoản</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -50,6 +51,10 @@
                                     <button type="submit" class="btn btn-sm btn-primary ms-2">Cập nhật vai trò</button>
                                 </form>
                                 <!-- Form thay đổi trạng thái -->
+
+                                <span th:if="${user.userId == currentAdminId}" class="text-muted">Không thể chỉnh sửa</span>
+                            </td>
+                            <td>
                                 <form th:action="@{/admin/user/update-status}" method="post" th:if="${user.userId != currentAdminId}" class="mt-2">
                                     <input type="hidden" name="userId" th:value="${user.userId}">
                                     <input type="hidden" name="status" th:value="${!user.isEnable}">

@@ -19,12 +19,14 @@ import java.io.IOException;
 @Service
 public class AuthFailImpl extends SimpleUrlAuthenticationFailureHandler {
 
-   @Autowired
-   UserRepository userRepository;
+    @Autowired
+    private UserRepository userRepository;
+
     @Autowired
     private LoggerService loggerService;
+
     @Autowired
-    UserService userService;
+    private UserService userService;
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
@@ -41,18 +43,18 @@ public class AuthFailImpl extends SimpleUrlAuthenticationFailureHandler {
                 errorMessage = "Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email để kích hoạt.";
                 loggerService.logWarning("Tài khoản chưa kích hoạt: " + email);
             } else if (user.getIsEnable()) {
-                // Tài khoản đã kích hoạt, kiểm tra trạng thái khóa
+                // Tài khoản đã kích hoạt và không bị vô hiệu hóa
                 if (user.getAccountStatusNonLocked()) {
                     // Tài khoản không bị khóa
                     if (user.getAccountFailedAttemptCount() < UserAuthUtlis.ATTEMPT_COUNT) {
                         userService.userFailedAttemptIncrease(user);
-                        errorMessage = "Email hoặc mật khẩu không đúng. Số lần thử còn lại: " +
-                                (UserAuthUtlis.ATTEMPT_COUNT - user.getAccountFailedAttemptCount());
-                        loggerService.logInfo("Tăng số lần đăng nhập thất bại cho: " + email);
+                        long remainingAttempts = UserAuthUtlis.ATTEMPT_COUNT - user.getAccountFailedAttemptCount();
+                        errorMessage = "Email hoặc mật khẩu không đúng. Còn " + remainingAttempts + " lần thử.";
+                        loggerService.logInfo("Tăng số lần đăng nhập thất bại cho: " + email + ", còn " + remainingAttempts + " lần");
                     } else {
                         userService.userAccountLock(user);
-                        errorMessage = "Tài khoản của bạn đã bị khóa do vượt quá số lần thử (3 lần).";
-                        loggerService.logWarning("Tài khoản bị khóa: " + email);
+                        errorMessage = "Tài khoản của bạn đã bị khóa do nhập sai mật khẩu 3 lần. Vui lòng thử lại sau 5 phút.";
+                        loggerService.logWarning("Tài khoản bị khóa do vượt quá số lần thử: " + email);
                     }
                 } else {
                     // Tài khoản bị khóa
@@ -60,7 +62,7 @@ public class AuthFailImpl extends SimpleUrlAuthenticationFailureHandler {
                         errorMessage = "Tài khoản của bạn đã được mở khóa. Vui lòng thử đăng nhập lại.";
                         loggerService.logInfo("Tài khoản được mở khóa: " + email);
                     } else {
-                        errorMessage = "Tài khoản của bạn đang bị khóa. Vui lòng thử lại sau.";
+                        errorMessage = "Tài khoản của bạn đang bị khóa. Vui lòng thử lại sau 5 phút.";
                         loggerService.logWarning("Tài khoản đang bị khóa: " + email);
                     }
                 }

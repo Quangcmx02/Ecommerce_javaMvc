@@ -14,8 +14,10 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 @Configuration
 public class SecurityConfig {
+    @Lazy
     @Autowired
     private UserDetailsService userDetailsService;
+    @Lazy
     @Autowired
     AuthenticationSuccessHandler authenticationSuccessHandler;
 
@@ -31,7 +33,7 @@ public class SecurityConfig {
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());     // Gắn PasswordEncoder
+        authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
 

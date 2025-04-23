@@ -41,20 +41,22 @@ public class UserServiceImpl implements UserService {
     @Override
     public User saveUser(User user) {
         loggerService.logInfo("Attempting to save user: email=" + user.getEmail());
-        user.setRole("admin");
+        user.setRole("user");
         user.setIsEnable(true);
         user.setAccountStatusNonLocked(true);
         user.setAccountFailedAttemptCount(0);
         user.setAccountLockTime(null);
         user.setActivationToken(UUID.randomUUID().toString());
-        // Validation đã được thực hiện ở controller, nhưng giữ kiểm tra này cho an toàn
         if (user.getPassword() == null || user.getPassword().isEmpty()) {
             loggerService.logError("Password is null or empty");
             throw new IllegalArgumentException("Mật khẩu không được để trống");
         }
 
-        String encodedPassword = passwordEncoder.encode(user.getPassword());
-        user.setPassword(encodedPassword);
+        String password = user.getPassword();
+        if (!password.startsWith("$2a$")) { // Kiểm tra định dạng BCrypt
+            String encodedPassword = passwordEncoder.encode(password);
+            user.setPassword(encodedPassword);
+        }
         try {
             User savedUser = userRepository.save(user);
             loggerService.logInfo("User saved successfully: email=" + savedUser.getEmail());
@@ -164,12 +166,11 @@ public class UserServiceImpl implements UserService {
                 return false;
             }
 
-            // Tạo mật khẩu ngẫu nhiên
+
             String newPassword = generateRandomPassword();
             user.setPassword(passwordEncoder.encode(newPassword));
             userRepository.save(user);
 
-            // Gửi email chứa mật khẩu mới
             emailService.sendNewPasswordEmail(email, "Mật khẩu mới RED WINGS", newPassword);
             loggerService.logInfo("New password sent to: " + email);
             return true;
@@ -193,19 +194,17 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found for userId: " + userId));
 
-        // Kiểm tra mật khẩu cũ
+
         if (!passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
             loggerService.logWarning("Incorrect old password for userId: " + userId);
             throw new IllegalArgumentException("Mật khẩu cũ không đúng");
         }
 
-        // Kiểm tra mật khẩu mới và xác nhận
         if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
             loggerService.logWarning("New password and confirmation do not match for userId: " + userId);
             throw new IllegalArgumentException("Mật khẩu mới và xác nhận không khớp");
         }
 
-        // Cập nhật mật khẩu
         user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
         userRepository.save(user);
         loggerService.logInfo("Password changed successfully for userId: " + userId);

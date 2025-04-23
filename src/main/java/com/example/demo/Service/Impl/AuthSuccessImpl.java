@@ -1,6 +1,8 @@
 package com.example.demo.Service.Impl;
 
 import com.example.demo.Entity.User;
+import com.example.demo.Repository.UserRepository;
+import com.example.demo.Service.UserService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,12 +22,20 @@ import java.util.Set;
 public class AuthSuccessImpl implements AuthenticationSuccessHandler {
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private UserRepository userRepository;
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
         String email = authentication.getName();
         User user = userDetailsService.getUserEntity(email);
-        request.getSession().setAttribute("currentUser", user); // Lưu User vào session
+        if (user != null) {
+            user.setAccountFailedAttemptCount(0);
+            userRepository.save(user);
+        }
+        request.getSession().setAttribute("currentUser", user);
 
         Collection<? extends org.springframework.security.core.GrantedAuthority> authorities = authentication.getAuthorities();
         Set<String> roles = AuthorityUtils.authorityListToSet(authorities);
